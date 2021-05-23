@@ -27,7 +27,7 @@ else:
 
 
 def st_visualize_chord(
-    chord: List[Pitch] = ["c4", "g#4", "b4"],
+    chord: List[Pitch],
     range_start: Pitch = Pitch("c3"),
     range_end: Pitch = Pitch("c6"),
     key: str = "key",
