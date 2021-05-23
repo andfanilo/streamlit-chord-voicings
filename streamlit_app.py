@@ -10,6 +10,8 @@ from sexpdata import car
 from sexpdata import cdr
 from sexpdata import Symbol
 
+from chord_visualizer import st_visualize_chord 
+
 
 def _sexpdata_to_dict(d: List[Symbol]) -> Dict:
     """Build a Dict from a parsed S-expression, as
@@ -157,6 +159,7 @@ def main():
         selected_chord = st.selectbox("Select a chord:", list(chords.keys()))
 
     st.write(chords[selected_chord])
+    st_visualize_chord()
 
 
 if __name__ == "__main__":
