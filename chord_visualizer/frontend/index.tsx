@@ -4,7 +4,11 @@ import * as React from "react";
 import { useEffect } from "react";
 import * as ReactDOM from "react-dom";
 
-import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
+import {
+  ComponentProps,
+  Streamlit,
+  withStreamlitConnection,
+} from "streamlit-component-lib";
 import { Piano, MidiNumbers } from "react-piano";
 import "react-piano/dist/styles.css";
 
@@ -15,10 +19,10 @@ import SoundfontProvider from "./SoundfontProvider";
 const audioContext = new window.AudioContext();
 const soundfontHostname = "https://d1pzp51pvbm36p.cloudfront.net";
 
-const ChordVisualizer = () => {
+const ChordVisualizer = ({ args }: ComponentProps) => {
   const noteRange = {
-    first: MidiNumbers.fromNote("c3"),
-    last: MidiNumbers.fromNote("c5"),
+    first: MidiNumbers.fromNote(args["rangeStart"]),
+    last: MidiNumbers.fromNote(args["rangeEnd"]),
   };
 
   useEffect(() => {
@@ -34,6 +38,7 @@ const ChordVisualizer = () => {
         <Piano
           noteRange={noteRange}
           width={1000}
+          activeNotes={args["notes"]}
           playNote={playNote}
           stopNote={stopNote}
           disabled={isLoading}

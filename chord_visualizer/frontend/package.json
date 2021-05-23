@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf dist/*",
     "dev": "parcel index.html",
-    "build": "parcel build --public-url ./ index.html"
+    "build": "rm -rf dist/* && parcel build --public-url ./ index.html"
   },
   "author": "Fanilo ANDRIANASOLO",
   "license": "MIT",

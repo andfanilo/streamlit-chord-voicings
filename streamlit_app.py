@@ -5,12 +5,14 @@ from typing import List
 
 import sexpdata
 import streamlit as st
+from music21.chord import Chord
+from music21.pitch import Pitch
 from music21.scale import ConcreteScale
 from sexpdata import car
 from sexpdata import cdr
 from sexpdata import Symbol
 
-from chord_visualizer import st_visualize_chord 
+from chord_visualizer import st_visualize_chord
 
 
 def _sexpdata_to_dict(d: List[Symbol]) -> Dict:
@@ -27,6 +29,21 @@ def _cdr_to_str(l: List[Symbol]) -> str:
     return " ".join([str(w) if isinstance(w, numbers.Number) else w.value() for w in l])
 
 
+def _format_pitch(n: str) -> Pitch:
+    return Pitch(
+        (
+            n.capitalize()
+            .replace("8", "")
+            .replace("---", "1")
+            .replace("--", "2")
+            .replace("-", "3")
+            .replace("+", "5")
+            .replace("++", "6")
+            .replace("+++", "7")
+        )
+    )
+
+
 @dataclass
 class Voicing:
     name: str
@@ -36,7 +53,7 @@ class Voicing:
 
 
 @dataclass
-class Chord:
+class ParsedChord:
     name: str
     pronounce: str
     key: str
@@ -79,12 +96,12 @@ def extract_scales(dictionary: List[Symbol]) -> Dict[str, ConcreteScale]:
     return parsed_scales
 
 
-def extract_chords(dictionary: List[Symbol]) -> Dict[str, Chord]:
+def extract_chords(dictionary: List[Symbol]) -> Dict[str, ParsedChord]:
     raw_chords: List[Dict] = [
         _sexpdata_to_dict(cdr(w)) for w in dictionary if car(w).value() == "chord"
     ]
 
-    parsed_chords: Dict[str, Chord] = {}  # holds the final list of chords
+    parsed_chords: Dict[str, ParsedChord] = {}  # holds the final list of chords
     same_chord_mapping: Dict[
         str, List[str]
     ] = {}  # holds chords with a "same" attribute to push to 'parsed_chords' when all chords have been extracted
@@ -120,7 +137,7 @@ def extract_chords(dictionary: List[Symbol]) -> Dict[str, Chord]:
             scales = [" ".join([name.value() for name in sc]) for sc in chord["scales"]]
             avoid = [av.value() for av in chord["avoid"]]
             substitute = [sub.value() for sub in chord["substitute"]]
-            parsed_chords[name] = Chord(
+            parsed_chords[name] = ParsedChord(
                 name=name,
                 pronounce=pronounce,
                 key=key,
@@ -158,8 +175,17 @@ def main():
         st.header("Configuration")
         selected_chord = st.selectbox("Select a chord:", list(chords.keys()))
 
-    st.write(chords[selected_chord])
-    st_visualize_chord()
+        all_voicings = chords[selected_chord].voicings
+
+        def format_voicing(v: Voicing):
+            return f"{v.name} - {v.type}"
+
+        selected_voicing = st.selectbox(
+            "Select voicing:", all_voicings, format_func=format_voicing
+        )
+
+    formatted_notes: List[Pitch] = [_format_pitch(n) for n in selected_voicing.notes]
+    st_visualize_chord(chord=formatted_notes)
 
 
 if __name__ == "__main__":
