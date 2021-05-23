@@ -166,5 +166,6 @@ if __name__ == "__main__":
     st.set_page_config(
         page_title="Visualizing Impro-Visor Chord voicings",
         page_icon="musical_keyboard",
+        layout="wide",
     )
     main()

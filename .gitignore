@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 build/
-dist/
+# dist/  # exceptionnaly I'm pushing builds too.
 eggs/
 .eggs/
 *.egg-info/
