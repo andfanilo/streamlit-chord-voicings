@@ -45,6 +45,8 @@ npm run build
 
 ## Resources
 
+Credit to [react-piano](https://github.com/kevinsqi/react-piano/), which `chord_visualizer` is forked from.
+
 Huge credits to the Impro-Visor team for creating this awesome musicology tool and consolidating all of this data!
 
 - [Impro-Visor official website](https://www.cs.hmc.edu/~keller/jazz/improvisor/)
