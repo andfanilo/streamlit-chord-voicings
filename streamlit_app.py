@@ -5,7 +5,7 @@ from typing import List
 
 import sexpdata
 import streamlit as st
-from music21.chord import Chord
+from music21.interval import Interval
 from music21.pitch import Pitch
 from music21.scale import ConcreteScale
 from sexpdata import car
@@ -29,7 +29,20 @@ def _cdr_to_str(l: List[Symbol]) -> str:
     return " ".join([str(w) if isinstance(w, numbers.Number) else w.value() for w in l])
 
 
+def _list_notes_to_str(l: List[Pitch]) -> str:
+    return " ".join([str(note) for note in l])
+
+
 def _format_pitch(n: str) -> Pitch:
+    """c8 represents an eight-note middle C.
+    c-/c+ transposes to one octave lower/higher
+
+    We don't need the duration info and need to build octave from the -/+ info 
+    (music21 would consider those as accidentals instead of octave transposition).
+
+    So _format_pitch(c8) --> Pitch('C')
+    So _format_pitch(g+8) --> Pitch('G5')
+    """
     return Pitch(
         (
             n.capitalize()
@@ -44,29 +57,36 @@ def _format_pitch(n: str) -> Pitch:
     )
 
 
+def _transpose_list_notes(
+    from_note: Pitch, to_note: Pitch, list_to_transpose: List[Pitch]
+) -> List[Pitch]:
+    interval = Interval(from_note, to_note)
+    return [note.transpose(interval) for note in list_to_transpose]
+
+
 @dataclass
 class Voicing:
     name: str
     type: str
-    notes: List[str]
-    extension: List[str]
+    notes: List[Pitch]
+    extension: List[Pitch]
 
 
 @dataclass
 class ParsedChord:
     name: str
     pronounce: str
-    key: str
+    key: Pitch
     family: str
-    spell: str
-    color: str
-    priority: str
-    approach: List[List[str]]
+    spell: List[Pitch]
+    color: List[Pitch]
+    priority: List[Pitch]
+    approach: List[List[Pitch]]
     voicings: List[Voicing]
-    extensions: List[str]
+    extensions: List[str]  # should be chord names
     scales: List[str]
-    avoid: List[str]
-    substitute: List[str]
+    avoid: List[Pitch]
+    substitute: List[str]  # should be chord names
     same: List[str]
 
 
@@ -112,8 +132,8 @@ def extract_chords(dictionary: List[Symbol]) -> Dict[str, ParsedChord]:
             name = car(v).value()
             voicing = _sexpdata_to_dict(cdr(v))
             typing = _cdr_to_str(voicing["type"])
-            notes = [n.value() for n in voicing["notes"]]
-            extension = [n.value() for n in voicing["extension"]]
+            notes = [_format_pitch(n.value()) for n in voicing["notes"]]
+            extension = [_format_pitch(n.value()) for n in voicing["extension"]]
             parsed_voicings.append(
                 Voicing(name=name, type=typing, notes=notes, extension=extension,)
             )
@@ -126,12 +146,15 @@ def extract_chords(dictionary: List[Symbol]) -> Dict[str, ParsedChord]:
             same_chord_mapping[name] = same
         else:
             pronounce = _cdr_to_str(chord["pronounce"])
-            key = _cdr_to_str(chord["key"])
+            key = _format_pitch(_cdr_to_str(chord["key"]))
             family = _cdr_to_str(chord["family"])
-            spell = _cdr_to_str(chord["spell"])
-            color = _cdr_to_str(chord["color"])
-            priority = _cdr_to_str(chord["priority"])
-            approach = [[n.value() for n in l] for l in chord["approach"]]
+            spell = [_format_pitch(note.value()) for note in chord["spell"]]
+            color = [_format_pitch(note.value()) for note in chord["color"]]
+            priority = [_format_pitch(note.value()) for note in chord["priority"]]
+            approach = [
+                [_format_pitch(note.value()) for note in list_of_notes]
+                for list_of_notes in chord["approach"]
+            ]
             voicings = _parse_voicings(chord["voicings"])
             extensions = [ch.value() for ch in chord["extensions"]]
             scales = [" ".join([name.value() for name in sc]) for sc in chord["scales"]]
@@ -173,9 +196,11 @@ def main():
 
     with st.sidebar:
         st.header("Configuration")
-        selected_chord = st.selectbox("Select a chord:", list(chords.keys()))
+        selected_chord = chords[
+            st.selectbox("Select a chord type:", list(chords.keys()))
+        ]
 
-        all_voicings = chords[selected_chord].voicings
+        all_voicings = selected_chord.voicings
 
         def format_voicing(v: Voicing):
             return f"{v.name} - {v.type}"
@@ -184,8 +209,23 @@ def main():
             "Select voicing:", all_voicings, format_func=format_voicing
         )
 
-    formatted_notes: List[Pitch] = [_format_pitch(n) for n in selected_voicing.notes]
-    st_visualize_chord(chord=formatted_notes)
+    st_visualize_chord(chord=selected_voicing.notes)
+
+    st.markdown(
+        f"""
+**Pronounce**: {selected_chord.pronounce}  
+**Family**: {selected_chord.family}  
+**Spell**: {_list_notes_to_str(selected_chord.spell)}  
+**Color**: {_list_notes_to_str(selected_chord.color)}  
+**Priority**: {_list_notes_to_str(selected_chord.priority)}  
+**Approaches**: { " _or_ ".join([_list_notes_to_str(list_notes) for list_notes in selected_chord.approach])}  
+**Extensions**: { " _or_ ".join(selected_chord.extensions)}  
+**Scales**: { " _or_ ".join(selected_chord.scales)}  
+**Avoid**: {_list_notes_to_str(selected_chord.avoid)}    
+**Substitute**: { " _or_ ".join(selected_chord.substitute)}  
+**Selected voicing**: {_list_notes_to_str(selected_voicing.notes)}  
+"""
+    )
 
 
 if __name__ == "__main__":
