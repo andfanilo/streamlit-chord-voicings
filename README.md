@@ -37,6 +37,8 @@ npm run dev
 streamlit run streamlit_app.py
 ```
 
+**NB**: When Streamlit runs, if it doesn't detect a running Parcel Dev Server it will fallback to frontend built assets. See `Build frontend` to build assets.
+
 ### Build frontend
 
 ```shell script
