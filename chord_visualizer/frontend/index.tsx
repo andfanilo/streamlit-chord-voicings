@@ -9,8 +9,8 @@ import {
   Streamlit,
   withStreamlitConnection,
 } from "streamlit-component-lib";
-import { Piano, MidiNumbers } from "react-piano";
-import "react-piano/dist/styles.css";
+import { Piano, MidiNumbers } from "./react-piano";
+import "./react-piano/styles.css";
 
 import SoundfontProvider from "./SoundfontProvider";
 
