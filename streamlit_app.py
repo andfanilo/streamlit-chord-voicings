@@ -158,7 +158,7 @@ def extract_chords(dictionary: List[Symbol]) -> Dict[str, ParsedChord]:
             voicings = _parse_voicings(chord["voicings"])
             extensions = [ch.value() for ch in chord["extensions"]]
             scales = [" ".join([name.value() for name in sc]) for sc in chord["scales"]]
-            avoid = [av.value() for av in chord["avoid"]]
+            avoid = [_format_pitch(av.value()) for av in chord["avoid"]]
             substitute = [sub.value() for sub in chord["substitute"]]
             parsed_chords[name] = ParsedChord(
                 name=name,
